@@ -7,7 +7,7 @@ from django.core.files.base import File
 from django.utils.deconstruct import deconstructible
 
 from .backblaze_b2 import BackBlazeB2
-
+from django.core.cache import cache
 
 @deconstructible
 class B2Storage(Storage):
@@ -29,10 +29,13 @@ class B2Storage(Storage):
 
         resp = self.b2.upload_file(name, content)
         if 'fileName' in resp:
+            #if self.b2.bucket_name != settings.BACKBLAZEB2_BUCKET_NAME:
+            #   return self.url(name)
             return resp['fileName']
 
         else:
             # Raise exception
+            print("Entramos en else no se porque")
             pass
 
     def exists(self, name):
@@ -65,15 +68,18 @@ class B2Storage(Storage):
     def url(self, name):
         return self.b2.get_file_url(name)
 
-        #
-        # def get_available_name(self, name, max_length=None):
-        #     pass
+    #def get_available_name(self, name, max_length=None):
+    #    return self.b2.download_url + '/'+ self.b2.bucket_name + '/'+ name
+
+
         #
         # def delete(self, name):
         #     pass
         #
-        # def exists(self, name):
-        #     pass
+    def exists(self, name):
+         if self.b2.bucket_name in name:
+             return True
+         return False
         #
         # def listdir(self, path):
         #     pass
