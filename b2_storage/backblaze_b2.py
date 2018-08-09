@@ -1,6 +1,6 @@
 import base64
 from contextlib import closing
-
+import json
 import requests
 import hashlib
 
@@ -15,7 +15,6 @@ class BackBlazeB2(object):
         self.authorize()
         self.get_bucket_id_by_name()
 
-
     def authorize(self):
         headers = {'Authorization': 'Basic: %s' % (base64.b64encode(
             ('%s:%s' % (self.account_id, self.app_key)).encode('utf-8'))).decode('utf-8')}
@@ -25,7 +24,6 @@ class BackBlazeB2(object):
             self.base_url = resp['apiUrl']
             self.download_url = resp['downloadUrl']
             self.authorization_token = resp['authorizationToken']
-
 
             return True
 
@@ -58,9 +56,7 @@ class BackBlazeB2(object):
             'X-Bz-Info-src_last_modified_millis': '',
         }
 
-
         download_response = requests.post(url, headers=headers, data=content.read())
-        print(download_response)
         # Status is 503: Service unavailable. Try again
         if download_response.status_code == 503:
             attempts = 0
@@ -79,6 +75,12 @@ class BackBlazeB2(object):
     def download_file(self, name):
         headers = {'Authorization': self.authorization_token}
         return requests.get("%s/file/%s/%s" % (self.download_url, self.bucket_name, name), headers=headers).content
+
+    def b2_delete_file_version(self,id,name):
+        headers = {'Authorization': self.authorization_token}
+        return requests.post("%s/b2api/v1/b2_delete_file_version" % self.download_url,
+                             headers=headers,json=json.dumps({'fileName': name, 'fileId': id})).content
+
 
     def get_file_url(self, name):
         if self.download_url in name:

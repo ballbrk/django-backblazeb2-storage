@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.files.storage import Storage
 from django.core.files.base import File
 from django.utils.deconstruct import deconstructible
-
+from .models import FileUpload
 from .backblaze_b2 import BackBlazeB2
 from django.core.cache import cache
 
@@ -31,6 +31,12 @@ class B2Storage(Storage):
         if 'fileName' in resp:
             #if self.b2.bucket_name != settings.BACKBLAZEB2_BUCKET_NAME:
             #   return self.url(name)
+            file_upload = FileUpload()
+            file_upload.file_id = resp['fileId']
+            file_upload.name = resp['fileName']
+            file_upload.content_sha1 = resp['contentSha1']
+            file_upload.save()
+
             return resp['fileName']
 
         else:
@@ -71,11 +77,18 @@ class B2Storage(Storage):
     #def get_available_name(self, name, max_length=None):
     #    return self.b2.download_url + '/'+ self.b2.bucket_name + '/'+ name
 
+    def delete(self, name):
+        try:
+            file_upload = FileUpload.objects.get(name=name)
+            res = self.b2.b2_delete_file_version(file_upload.file_id,file_upload.name)
+            if 'fileName' in res:
+                file_upload.delete()
 
-        #
-        # def delete(self, name):
-        #     pass
-        #
+        except FileUpload.DoesNotExist:
+            pass
+
+        pass
+
     def exists(self, name):
          if self.b2.bucket_name in name:
              return True
