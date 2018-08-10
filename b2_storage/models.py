@@ -9,6 +9,7 @@ class FileUpload(models.Model):
     file_id = models.CharField(max_length=255, db_index=True, primary_key=True)
     name = models.CharField(max_length=400, verbose_name=_(u'file name'),db_index=True)
     content_sha1 = models.CharField(max_length=150,db_index=True)
+    size = models.BigIntegerField(default=0, verbose_name=_(u"Tamaño en bytes"))
 
     def __str__(self):
         return self.file_id

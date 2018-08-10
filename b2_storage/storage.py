@@ -35,6 +35,7 @@ class B2Storage(Storage):
             file_upload.file_id = resp['fileId']
             file_upload.name = resp['fileName']
             file_upload.content_sha1 = resp['contentSha1']
+            file_upload.size = resp['contentLength']
             file_upload.save()
 
             return resp['fileName']
@@ -90,13 +91,18 @@ class B2Storage(Storage):
         pass
 
     def exists(self, name):
-         if self.b2.bucket_name in name:
-             return True
-         return False
-        #
-        # def listdir(self, path):
-        #     pass
-        #
-        # def size(self, name):
-        #     pass
-        #
+        try:
+            FileUpload.objects.get(name=name)
+            return True
+        except FileUpload.DoesNotExist:
+            return False
+
+    def size(self, name):
+        try:
+            file_upload = FileUpload.objects.get(name=name)
+            return file_upload['size']
+
+        except FileUpload.DoesNotExist:
+            return 0
+            pass
+
