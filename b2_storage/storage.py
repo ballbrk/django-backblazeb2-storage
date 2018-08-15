@@ -82,10 +82,14 @@ class B2Storage(Storage):
         try:
             file_upload = FileUpload.objects.get(name=name)
             res = self.b2.b2_delete_file_version(file_upload.file_id,file_upload.name)
+            print(res)
             if 'fileName' in res:
+
                 file_upload.delete()
+                print("Hemos borrado el archivo")
 
         except FileUpload.DoesNotExist:
+            print("No puedo borrar el archivo")
             pass
 
         pass

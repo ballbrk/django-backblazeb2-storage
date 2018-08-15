@@ -78,9 +78,13 @@ class BackBlazeB2(object):
 
     def b2_delete_file_version(self,id,name):
         headers = {'Authorization': self.authorization_token}
-        return requests.post("%s/b2api/v1/b2_delete_file_version" % self.download_url,
-                             headers=headers,json=json.dumps({'fileName': name, 'fileId': id})).content
+        data = json.dumps({'fileName': name, 'fileId': id})
+        print(data)
+        response = requests.post("%s/b2api/v1/b2_delete_file_version" % self.base_url, headers=headers, data=data)
+        if response.status_code != 200:
+            response.raise_for_status()
 
+        return response.json()
 
     def get_file_url(self, name):
         if self.download_url in name:
