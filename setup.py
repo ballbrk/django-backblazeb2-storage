@@ -1,4 +1,4 @@
-'contentSha1from setuptools import setup, find_packages
+from setuptools import setup, find_packages
 
 from b2_storage import __version__
 
