@@ -8,6 +8,7 @@ from django.utils.deconstruct import deconstructible
 from .models import FileUpload
 from .backblaze_b2 import BackBlazeB2
 from django.core.cache import cache
+from django.db import transaction
 
 @deconstructible
 class B2Storage(Storage):
@@ -81,16 +82,17 @@ class B2Storage(Storage):
     def delete(self, name):
         try:
             file_upload = FileUpload.objects.get(name=name)
-            res = self.b2.b2_delete_file_version(file_upload.file_id,file_upload.name)
-            print(res)
-            if 'fileName' in res:
-
-                file_upload.delete()
-                print("Hemos borrado el archivo")
-
+            name = file_upload.name
+            id = file_upload.file_id
+            file_upload.delete()
+            """
+            self.b2.b2_delete_file_version(id,name )
+            """
         except FileUpload.DoesNotExist:
-            print("No puedo borrar el archivo")
             pass
+        except BaseException as e:
+            print("entro aqui")
+            print(e)
 
         pass
 

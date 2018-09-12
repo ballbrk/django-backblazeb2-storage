@@ -1,5 +1,4 @@
 import base64
-from contextlib import closing
 import json
 import requests
 import hashlib
@@ -19,6 +18,8 @@ class BackBlazeB2(object):
         headers = {'Authorization': 'Basic: %s' % (base64.b64encode(
             ('%s:%s' % (self.account_id, self.app_key)).encode('utf-8'))).decode('utf-8')}
         response = requests.get('https://api.backblaze.com/b2api/v1/b2_authorize_account', headers=headers)
+        print("nos Autorizamos")
+        print(response.json())
         if response.status_code == 200:
             resp = response.json()
             self.base_url = resp['apiUrl']
@@ -79,10 +80,13 @@ class BackBlazeB2(object):
     def b2_delete_file_version(self,id,name):
         headers = {'Authorization': self.authorization_token}
         data = json.dumps({'fileName': name, 'fileId': id})
-        print(data)
+
         response = requests.post("%s/b2api/v1/b2_delete_file_version" % self.base_url, headers=headers, data=data)
+
         if response.status_code != 200:
-            response.raise_for_status()
+            res = response.json()
+            if res['code'] != 'file_not_present':
+                response.raise_for_status()
 
         return response.json()
 
