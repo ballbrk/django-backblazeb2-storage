@@ -18,8 +18,6 @@ class BackBlazeB2(object):
         headers = {'Authorization': 'Basic: %s' % (base64.b64encode(
             ('%s:%s' % (self.account_id, self.app_key)).encode('utf-8'))).decode('utf-8')}
         response = requests.get('https://api.backblaze.com/b2api/v1/b2_authorize_account', headers=headers)
-        print("nos Autorizamos")
-        print(response.json())
         if response.status_code == 200:
             resp = response.json()
             self.base_url = resp['apiUrl']
@@ -57,17 +55,23 @@ class BackBlazeB2(object):
             'X-Bz-Info-src_last_modified_millis': '',
         }
 
-        download_response = requests.post(url, headers=headers, data=content.read())
+        upload_response = requests.post(url, headers=headers, data=content.read(),timeout=10)
         # Status is 503: Service unavailable. Try again
-        if download_response.status_code == 503:
+        if upload_response.status_code == 503:
             attempts = 0
-            while attempts <= 3 and download_response.status_code == 503:
-                download_response = requests.post(url, headers=headers, data=content.read())
-                attempts += 1
-        if download_response.status_code != 200:
-            download_response.raise_for_status()
+            while attempts <= 3 and upload_response.status_code == 503:
+                response = self.get_upload_url()
+                if 'uploadUrl' not in response:
+                    return False
 
-        return download_response.json()
+                url = response['uploadUrl']
+                upload_response = requests.post(url, headers=headers, data=content.read(),timeout=10)
+                attempts += 1
+        if upload_response.status_code != 200:
+            print(upload_response.json())
+            upload_response.raise_for_status()
+
+        return upload_response.json()
 
     def get_file_info(self, name):
         headers = {'Authorization': self.authorization_token}

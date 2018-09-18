@@ -30,8 +30,6 @@ class B2Storage(Storage):
 
         resp = self.b2.upload_file(name, content)
         if 'fileName' in resp:
-            #if self.b2.bucket_name != settings.BACKBLAZEB2_BUCKET_NAME:
-            #   return self.url(name)
             file_upload = FileUpload()
             file_upload.file_id = resp['fileId']
             file_upload.name = resp['fileName']
@@ -43,6 +41,7 @@ class B2Storage(Storage):
 
         else:
             # Raise exception
+            print(resp)
             print("Entramos en else no se porque")
             pass
 
