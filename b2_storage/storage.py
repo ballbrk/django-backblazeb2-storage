@@ -10,8 +10,11 @@ from .backblaze_b2 import BackBlazeB2
 from django.core.cache import cache
 from django.db import transaction
 
+from b2_storage.tasks import RemoveElement
+
 @deconstructible
 class B2Storage(Storage):
+
     def __init__(self, account_id=None, app_key=None, bucket_name=None):
         overrides = locals()
         defaults = {
@@ -75,25 +78,31 @@ class B2Storage(Storage):
     def url(self, name):
         return self.b2.get_file_url(name)
 
-    #def get_available_name(self, name, max_length=None):
+    # def get_available_name(self, name, max_length=None):
     #    return self.b2.download_url + '/'+ self.b2.bucket_name + '/'+ name
 
     def delete(self, name):
+        print("delete file")
+        print(name)
+        from django.db import IntegrityError, transaction
         try:
-            file_upload = FileUpload.objects.get(name=name)
-            name = file_upload.name
-            id = file_upload.file_id
-            file_upload.delete()
-            """
-            self.b2.b2_delete_file_version(id,name )
-            """
-        except FileUpload.DoesNotExist:
-            pass
-        except BaseException as e:
+            with transaction.atomic():
+                try:
+                    file_upload = FileUpload.objects.get(name=name)
+                    name = file_upload.name
+                    file_id = file_upload.file_id
+                    result = self.b2.b2_delete_file_version(file_id, name)
+                    print(result)
+                    RemoveElement.delay(file_id, name)
+                except FileUpload.DoesNotExist:
+                    pass
+                except FileUpload.MultipleObjectsReturned:
+                    pass
+
+        except IntegrityError as e:
             print("entro aqui")
             print(e)
 
-        pass
 
     def exists(self, name):
         try:
@@ -110,4 +119,3 @@ class B2Storage(Storage):
         except FileUpload.DoesNotExist:
             return 0
             pass
-

@@ -3,7 +3,6 @@ import json
 import requests
 import hashlib
 
-
 class BackBlazeB2(object):
 
     def __init__(self, app_key=None, account_id=None, bucket_name=None):
@@ -68,7 +67,6 @@ class BackBlazeB2(object):
                 upload_response = requests.post(url, headers=headers, data=content.read(),timeout=10)
                 attempts += 1
         if upload_response.status_code != 200:
-            print(upload_response.json())
             upload_response.raise_for_status()
 
         return upload_response.json()
